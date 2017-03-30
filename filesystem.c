@@ -9,6 +9,16 @@
 #include "ext2.h"
 #include "filesystem.h"
 
+int string_size(char *c){
+    int i = 0;
+    
+    while(c[i] != '\0'){
+        i++;
+    }
+    
+    return i;
+}
+
 int find_empty_block(unsigned char *block_bitmap, unsigned int *it_num_blocks_ptr) {
     
     while (((block_bitmap[i] & 1 << j) >> j) != 0) {
@@ -79,4 +89,39 @@ char ** make_path(char *path, int *num_directories){
     split_path(path, result);
 
     return result;
+}
+
+int check_block(unsigned char * disk, int curr_block, char * dir_name){
+    int rec_length = 0;
+    int dir_name_len = string_size(dir_name);
+
+    char * temp = malloc(dir_name_len);
+
+    strncpy(temp, dir_name, dir_name_len);
+
+    struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + curr_block * EXT2_BLOCK_SIZE);
+
+    while(rec_length < EXT2_BLOCK_SIZE){
+        if(strcmp(temp, directory_entry->name)){
+            return directory_entry->inode;
+        }
+        rec_length += directory_entry->rec_length;
+    }
+
+    return -1;
+}
+
+int find_free_inode(unsigned char * inode_bitmap, int num_inodes){
+    int bit;
+
+    for(int i = 0; i < num_inodes; i++){
+        if(i == 1 || i >= 11){
+            bit = (inode_bitmap[i/8] & 1 << (i % 8)) >> (i % 8);
+            if(bit == 0){
+                return i + 1;
+            }
+        }
+    }
+
+    return -1;
 }
