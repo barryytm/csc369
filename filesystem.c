@@ -1,7 +1,6 @@
 int get_empty_data_block(unsigned char *block_bitmap, int blocks_count) {
 
-    int i;
-    int j;
+    int i, j;
     // for block bit map
     for (i = 0; i < blocks_count / 8 ; i++) {
         for (j = 0; j < 8; j++) {
@@ -10,13 +9,12 @@ int get_empty_data_block(unsigned char *block_bitmap, int blocks_count) {
             }
         }
     }
-	// no bit avaible
+	// no bits avaible
 	return 0;
 }
 
 int get_empty_inode(unsigned char *inode_bitmap, int blocks_count) {
-	 int i;
-    int j;
+	int i, j;
     // for block bit map
     for (i = 0; i < blocks_count / 8 ; i++) {
         for (j = 0; j < 8; j++) {
@@ -26,7 +24,7 @@ int get_empty_inode(unsigned char *inode_bitmap, int blocks_count) {
         }
  
     }
-	// no bit avaible
+	// no inodes avaible
     return 0;
 }
 
