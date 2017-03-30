@@ -18,7 +18,10 @@ int get_empty_inode(unsigned char *inode_bitmap, int blocks_count) {
     for (i = 0; i < blocks_count / 8 ; i++) {
         for (j = 0; j < 8; j++) {
             if (((inode_bitmap[i] & 1 << j) >> j) == 0) {
-                return i * 8 + (j + 1);
+                int inode = i * 8 + (j + 1);
+                if (inode == 1 || inode > 10) {
+                    return inode;
+                }
             }
         }
 
