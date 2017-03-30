@@ -28,7 +28,7 @@ FILE *file;
 
 int main(int argc, char **argv) {
 
-    if(argc != 4) {
+    if (argc != 4) {
         fprintf(stderr, "Usage: %s <image file name>\n", argv[0]);
         exit(1);
     }
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     int fd = open(argv[1], O_RDWR);
 
     disk = mmap(NULL, 128 * 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if(disk == MAP_FAILED) {
+    if (disk == MAP_FAILED) {
         perror("failed to open the file");
         exit(ENOENT);
     }
@@ -64,10 +64,10 @@ int main(int argc, char **argv) {
 	// allocate the inode
 	int i, j;
 	int current_inode = 1;
-	for(i = 0; i < inode_num_blocks; i++){
+	for (i = 0; i < inode_num_blocks; i++){
 		inode_block = (struct ext2_inode *)(disk + (gd->bg_inode_table + i) * EXT2_BLOCK_SIZE);
-		for(j = 0; j < inodes_per_block; j++){
-			if(current_inode == empty_inode) {
+		for (j = 0; j < inodes_per_block; j++){
+			if (current_inode == empty_inode) {
 				inode_block[j].i_mode = EXT2_S_IFREG;
 				inode_block[j].i_uid = 0;
 				inode_block[j].i_ctime = time(0);
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 				// write read and write
 				while (fgets(buffer, EXT2_BLOCK_SIZE, file) != NULL {
 					// direct pointers
-					if(inode_block[j].blocks < MAX_DIRECTION_POINTERS) {
+					if (inode_block[j].blocks < MAX_DIRECTION_POINTERS) {
 						// write the data to the blocks
 						memcpy((disk + (empty_data_block * EXT2_BLOCK_SIZE)), buffer, EXT2_BLOCK_SIZE);
 						// set the bit on the block map to 1 (in use)
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 						inode_block[j].i_block[inode_block[j].blocks] = empty_data_block;
 					} else {
 						// first time using indirect pointers
-						if(inode_block[j].blocks == MAX_DIRECTION_POINTERS) {
+						if (inode_block[j].blocks == MAX_DIRECTION_POINTERS) {
 							// set the bit on the block map to 1 (in use)
 							block_bitmap |= (1 < (empty_data_block - 1));
 							// update the pointer
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 					gd->s_free_blocks_count++;
 					// request a another empty block
 					empty_data_block = get_empty_data_block(block_bitmap, sb->s_blocks_count);
-                    
+
 					// update metadata
 					sb->bg_free_inodes_count++;
 					gd->s_free_inodes_count++;
