@@ -9,7 +9,7 @@ int get_empty_data_block(unsigned char *block_bitmap, int blocks_count) {
         }
     }
 	// no bits avaible
-	return 0;
+	return -1;
 }
 
 int get_empty_inode(unsigned char *inode_bitmap, int blocks_count) {
@@ -24,7 +24,7 @@ int get_empty_inode(unsigned char *inode_bitmap, int blocks_count) {
 
     }
 	// no inodes avaible
-    return 0;
+    return -1;
 }
 
 int string_size(char *c){
@@ -81,21 +81,6 @@ int check_block(unsigned char * disk, int curr_block, char * dir_name){
             return directory_entry->inode;
         }
         rec_length += directory_entry->rec_length;
-    }
-
-    return -1;
-}
-
-int find_free_inode(unsigned char * inode_bitmap, int num_inodes){
-    int bit;
-
-    for(int i = 0; i < num_inodes; i++){
-        if(i == 1 || i >= 11){
-            bit = (inode_bitmap[i/8] & 1 << (i % 8)) >> (i % 8);
-            if(bit == 0){
-                return i + 1;
-            }
-        }
     }
 
     return -1;
