@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
         perror("failed to open the file");
         exit(ENOENT);
     }
-	
+
     // make sb point to the superblock
     sb = (struct ext2_super_block *)(disk + EXT2_BLOCK_SIZE);
 
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 	for(i = 0; i < inode_num_blocks; i++){
 		inode_block = (struct ext2_inode *)(disk + (gd->bg_inode_table + i) * EXT2_BLOCK_SIZE);
 		for(j = 0; j < inodes_per_block; j++){
-			if (current_inode == empty_inode) {
+			if(current_inode == empty_inode) {
 				inode_block[j].i_mode = EXT2_S_IFREG;
 				inode_block[j].i_uid = 0;
 				inode_block[j].i_ctime = time(0);
@@ -77,23 +77,23 @@ int main(int argc, char **argv) {
 				inode_block[j].osd1 = 0;
 				inode_block[j].i_block[15]; // needed
 				inode_block[j].i_generation = 0;
-				inode_block[j].i_file_acl = 0;	
+				inode_block[j].i_file_acl = 0;
 				inode_block[j].i_dir_acl = 0;
 				inode_block[j].i_faddr;
 				// not sure about extra
-				
+
 				file = fopen(argv[2], "r");
 				// get the size of the file
 				fseek(fp, 0L, SEEK_END);
 				inode_block[j].i_size = ftell(fp);
 				// make sure it reads from the beginning
 				fseek(file, 0, SEEK_SET);
-				
+
 				int pointers_used = 0;
 				// write read and write
 				while (fgets(buffer, EXT2_BLOCK_SIZE, file) != NULL {
 					// direct pointers
-					if (inode_block[j].blocks < 12) {
+					if(inode_block[j].blocks < MAX_DIRECTION_POINTERS) {
 						// write the data to the blocks
 						memcpy((disk + (empty_data_block * EXT2_BLOCK_SIZE)), buffer, EXT2_BLOCK_SIZE);
 						// set the bit on the block map to 1 (in use)
@@ -102,17 +102,17 @@ int main(int argc, char **argv) {
 						inode_block[j].i_block[inode_block[j].blocks] = empty_data_block;
 					} else {
 						// first time using indirect pointers
-						if (inode_block[j].blocks == 12) {
+						if(inode_block[j].blocks == MAX_DIRECTION_POINTERS) {
 							// set the bit on the block map to 1 (in use)
 							block_bitmap |= (1 < (empty_data_block - 1));
 							// update the pointer
 							inode_block[j].i_block[inode_block[j].blocks] = empty_data_block;
-	
+
 							inode_block[j].blocks++;
 							sb->bg_free_blocks_count++;
 							gd->s_free_blocks_count++;
 						}
-						memcpy((disk + (empty_data_block * EXT2_BLOCK_SIZE + inode_block[j].blocks - 12)), buffer, EXT2_BLOCK_SIZE);		
+						memcpy((disk + (empty_data_block * EXT2_BLOCK_SIZE + inode_block[j].blocks - 12)), buffer, EXT2_BLOCK_SIZE);
 					}
 					// update the count for blocks
 					inode_block[j].blocks++;
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 					gd->s_free_blocks_count++;
 					// request a another empty block
 					empty_data_block = get_empty_data_block(block_bitmap, sb->s_blocks_count);
-					
+                    
 					// update metadata
 					sb->bg_free_inodes_count++;
 					gd->s_free_inodes_count++;
@@ -128,11 +128,11 @@ int main(int argc, char **argv) {
 
 			}
 			current_inode++;
-				
+
 		}
 	}
 
-	
+
 
     return 0;
 
