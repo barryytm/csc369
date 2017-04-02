@@ -30,6 +30,20 @@ int get_empty_inode(unsigned char *inode_bitmap, int blocks_count) {
     return -1;
 }
 
+int get_inode_with_path() {
+	for (i = 0; i < inode_num_blocks; i++){
+		inode_block = (struct ext2_inode *)(disk + (gd->bg_inode_table + i) * EXT2_BLOCK_SIZE);
+		for (j = 0; j < inodes_per_block; j++){
+			inode_block[j].
+		}
+	}
+}
+
+int dir_blocks() {
+	
+}
+
+
 int string_size(char *c){
     int i = 0;
 
@@ -194,3 +208,4 @@ void make_dir(unsigned char *inode_bitmap, unsigned char *block_bitmap, char *pa
     }
 
 }
+

@@ -115,6 +115,7 @@ int main(int argc, char **argv) {
 						memcpy((disk + (empty_data_block * EXT2_BLOCK_SIZE + inode_block[j].i_blocks - 12)), buffer, EXT2_BLOCK_SIZE);
 					}
 					// update the count for blocks
+					block_bitmap |= (1 < (empty_data_block - 1));
 					inode_block[j].i_blocks++;
 					sb->s_free_blocks_count++;
 					gd->bg_free_blocks_count++;
@@ -131,6 +132,9 @@ int main(int argc, char **argv) {
 
 		}
 	}
+	
+	inode_bitmap |= (1 < (empty_inode - 1));
+		
 
 
 
