@@ -58,16 +58,16 @@ int string_size(char *c){
 void split_path(char * path, char ** result){
     int i = 0;
 
-    char * temp_path = malloc(sizeof(path));
+    char * temp_path = malloc(strlen(path));
 
     strcpy(temp_path, path);
 
     char * temp = strtok(temp_path, "/");
 
     while(temp != NULL){
-        result[i] = malloc(sizeof(temp));
+        result[i] = malloc(strlen(temp));
         strcpy(result[i], temp);
-        temp = strtok(temp_path, "/");
+        temp = strtok(NULL, "/");
         i++;
     }
 }
