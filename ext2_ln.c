@@ -26,6 +26,36 @@ int empty_inode;
 char buffer[EXT2_BLOCK_SIZE];	// usee block size as the buffer size
 FILE *file;
 
+
+
+int get_dir_blocks() {
+    unsigned int mask = 0b000000000111;
+    unsigned int dir_block_bitmap[sb->s_inodes_count];
+    int num_dir = 0;
+    int current_inode = 1;
+
+    for (i = 0; i < inode_num_blocks; i++){
+        inode_block = (struct ext2_inode *)(disk + (gd->bg_inode_table + i) * EXT2_BLOCK_SIZE);
+        for (j = 0; j < inodes_per_block; j++) {
+            // found a directory block
+            if(((inode_block[j].i_mode)  & EXT2_S_IFDIR) != 0 &&
+                inode_block[j].i_mode & mask && inode_block[j].i_size > 0){
+                    dir_block_bitmap[i - 1] = 1;
+                    num_dir++;
+            } else {
+                dir_block_bitmap[i - 1] = 0;
+            }
+        }
+    }
+
+    int dir_array[num_dir];
+
+    for (i = 0; i < sb->s_inodes_count) {
+        if (dir_block_bitmap[i - 1] == 1) {
+
+        }
+    }
+}
 int main(int argc, char **argv) {
 
     if (argc < 3) {
@@ -54,11 +84,11 @@ int main(int argc, char **argv) {
     // sizes
     inodes_per_block = EXT2_BLOCK_SIZE / sizeof(struct ext2_inode);
     inode_num_blocks = sb->s_inodes_per_group / inodes_per_block;
-	
+
 	struct stat file_stat;
 
 	// hard links
-		
+
 
 
 

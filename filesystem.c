@@ -29,7 +29,7 @@ int get_empty_inode(unsigned char *inode_bitmap, int blocks_count) {
 	// no inodes avaible
     return -1;
 }
-
+/*
 int get_inode_with_path() {
 	for (i = 0; i < inode_num_blocks; i++){
 		inode_block = (struct ext2_inode *)(disk + (gd->bg_inode_table + i) * EXT2_BLOCK_SIZE);
@@ -38,10 +38,8 @@ int get_inode_with_path() {
 		}
 	}
 }
+*/
 
-int dir_blocks() {
-	
-}
 
 
 int string_size(char *c){
@@ -145,9 +143,9 @@ void make_dir(unsigned char *inode_bitmap, unsigned char *block_bitmap, char *pa
     struct ext2_inode * ind = it + (sizeof(struct ext2_inode) * (free_inode - 1));
     struct ext2_dir_entry * new_block =  (struct ext2_dir_entry *) (disk + (free_block * EXT2_BLOCK_SIZE));
 
-    
+
     struct ext2_inode *parent_ind = it + (sizeof(struct ext2_inode) * (parent_inode - 1));
-    
+
     //char *names[3] = {".", "..", seperated_path[num_checked_dirs - 1]};
     new_block->rec_len = 12;
     new_block->name_len = 1;
@@ -177,7 +175,7 @@ void make_dir(unsigned char *inode_bitmap, unsigned char *block_bitmap, char *pa
     int rec_length = 0;
 
     for(i = 0; i < 15; i++){
-        
+
         if(parent_ind->i_block[i]){
             curr_dir = (struct ext2_dir_entry *) (disk + parent_ind->i_block[i] * EXT2_BLOCK_SIZE);
             while(rec_length < EXT2_BLOCK_SIZE){
@@ -208,4 +206,3 @@ void make_dir(unsigned char *inode_bitmap, unsigned char *block_bitmap, char *pa
     }
 
 }
-
