@@ -112,29 +112,32 @@ int main(int argc, char **argv) {
 							sb->s_free_blocks_count++;
 							gd->bg_free_blocks_count++;
 						}
-						memcpy((disk + (empty_data_block * EXT2_BLOCK_SIZE + inode_block[j].i_blocks - 12)), buffer, EXT2_BLOCK_SIZE);
+                        // the create an indirect pointer
+                        int *indirect_ptr;
+                        // get another empty block
+                        empty_data_block = get_empty_data_block(block_bitmap,
+                            sb->s_blocks_count);
+                        indirect_ptr = &empty_data_block;
+
+                        // copy the point to the indirect_block
+						memcpy((disk + (empty_data_block * EXT2_BLOCK_SIZE),
+                            indirect_ptr, sizeof(int *));
 					}
 					// update the count for blocks
-					block_bitmap |= (1 < (empty_data_block - 1));
 					inode_block[j].i_blocks++;
 					sb->s_free_blocks_count++;
 					gd->bg_free_blocks_count++;
 					// request a another empty block
 					empty_data_block = get_empty_data_block(block_bitmap, sb->s_blocks_count);
-
-					// update metadata
-					sb->s_free_inodes_count++;
-					gd->bg_free_inodes_count++;
 				}
-
 			}
+            // update metadata for inode
+            sb->s_free_inodes_count++;
+            gd->bg_free_inodes_count++;
 			current_inode++;
 
 		}
 	}
-	
-	inode_bitmap |= (1 < (empty_inode - 1));
-		
 
 
 
