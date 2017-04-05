@@ -135,7 +135,7 @@ int main(int argc, char **argv){
 	unsigned char *disk;
 	if(argc != 3) {
         fprintf(stderr, "Usage: %s <image file name> <absolute path of directory>\n", argv[0]);
-        exit(1);
+        exit(-1);
     }
 
     int fd = open(argv[1], O_RDWR);
@@ -159,7 +159,7 @@ int main(int argc, char **argv){
 
 	int num_checked_dirs = 0;
 	int not_done = 1;
-	int curr_inode = 2, parent_inode = -1;
+	int curr_inode = 2, parent_inode = 2;
 	int curr_block;
 
 	struct ext2_super_block *sb = (struct ext2_super_block *)(disk + 1024);
