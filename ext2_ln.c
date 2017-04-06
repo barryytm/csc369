@@ -28,9 +28,9 @@ FILE *file;
 
 
 
-int get_dir_blocks() {
+int *get_dir_block_map() {
     unsigned int mask = 0b000000000111;
-    unsigned int dir_block_bitmap[sb->s_inodes_count];
+    int dir_block_map[sb->s_inodes_count];
     int num_dir = 0;
     int current_inode = 1;
 
@@ -40,7 +40,7 @@ int get_dir_blocks() {
             // found a directory block
             if(((inode_block[j].i_mode)  & EXT2_S_IFDIR) != 0 &&
                 inode_block[j].i_mode & mask && inode_block[j].i_size > 0){
-                    dir_block_bitmap[i - 1] = 1;
+                    dir_block_bitmap[i - 1] = inode_block[j].i_block[0];
                     num_dir++;
             } else {
                 dir_block_bitmap[i - 1] = 0;
@@ -48,17 +48,41 @@ int get_dir_blocks() {
         }
     }
 
-    int dir_array[num_dir];
-
-    for (i = 0; i < sb->s_inodes_count) {
-        if (dir_block_bitmap[i - 1] == 1) {
-
-        }
-    }
+	return dir_block_map;
 }
+
+int get_inode_num(char *src_path) {
+	int i;
+	// hardlink
+	int block_read = 0;
+		// directory block
+		
+		int dir_block_map[sb->s_inodes_count] = get_dir_block_map();
+		char *current_dir = strtok(src_path, "/");
+
+		while (current_dir != NULL) {
+			for(i = 0; i < sb->s_inodes_count; i++) {
+				if (dir_block_map[i] != 0) {
+					struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + dir_blocks[i] * EXT2_BLOCK_SIZE);
+					while (block_read < EXT2_BLOCK_SIZE) {
+						directory_entry = (void *)directory_entry + directory_entry->rec_len;
+						// found the dir
+						if (strncmp(current_dir, directory_entry->name, directory_entry->name_len) == 0 && strlen(current_dir) == directory_entry->name_len) {
+								return directory_entry->inode;
+						}
+						block_read += directory_entry->rec_len;
+					}
+				}
+			}
+			current_dir = strtok(NULL, "/");
+		}
+		return 0;
+}
+
+
 int main(int argc, char **argv) {
 
-    if (argc < 3) {
+    if (argc < 4 && argc > 5) {
         fprintf(stderr, "Usage: %s <image file name>\n", argv[0]);
         exit(1);
     }
@@ -85,9 +109,20 @@ int main(int argc, char **argv) {
     inodes_per_block = EXT2_BLOCK_SIZE / sizeof(struct ext2_inode);
     inode_num_blocks = sb->s_inodes_per_group / inodes_per_block;
 
-	struct stat file_stat;
+	// hard link
+	if (argc == 4) {
+		char src_path[strlen(argv[1]) + 1];
+	 	strcpy(src_path, argv[1]);
+		char des_path[strlen(argv[2]) + 1];
+		strcpy(src_path, argv[2]);
 
-	// hard links
+		int src_inode_num = get_inode_num(src_path);
+		strcpy(src_path, argv[1]); //correct the string
+
+		int s
+	}
+	// soft links
+	else if (argc == 5) {get_inode_num()}
 
 
 
