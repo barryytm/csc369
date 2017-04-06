@@ -25,6 +25,7 @@ int empty_data_block;
 int empty_inode;
 char buffer[EXT2_BLOCK_SIZE];	// usee block size as the buffer size
 FILE *file;
+struct ext2_inode *it;
 
 
 
@@ -51,33 +52,33 @@ int *get_dir_block_map() {
 	return dir_block_map;
 }
 
-int get_inode_num(char *src_path) {
+ext2_dir_entry *get_dir_entry(char *src_path) {
 	int i;
 	// hardlink
 	int block_read = 0;
 		// directory block
-		
-		int dir_block_map[sb->s_inodes_count] = get_dir_block_map();
-		char *current_dir = strtok(src_path, "/");
+	int dir_block_map[sb->s_inodes_count] = get_dir_block_map();
+	char *current_dir = strtok(src_path, "/");
 
-		while (current_dir != NULL) {
-			for(i = 0; i < sb->s_inodes_count; i++) {
-				if (dir_block_map[i] != 0) {
-					struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + dir_blocks[i] * EXT2_BLOCK_SIZE);
-					while (block_read < EXT2_BLOCK_SIZE) {
-						directory_entry = (void *)directory_entry + directory_entry->rec_len;
-						// found the dir
-						if (strncmp(current_dir, directory_entry->name, directory_entry->name_len) == 0 && strlen(current_dir) == directory_entry->name_len) {
-								return directory_entry->inode;
-						}
-						block_read += directory_entry->rec_len;
+	while (current_dir != NULL) {
+		for(i = 0; i < sb->s_inodes_count; i++) {
+			if (dir_block_map[i] != 0) {
+				struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + dir_blocks[i] * EXT2_BLOCK_SIZE);
+				while (block_read < EXT2_BLOCK_SIZE) {
+					directory_entry = (void *)directory_entry + directory_entry->rec_len;
+					// found the dir
+					if (strncmp(current_dir, directory_entry->name, directory_entry->name_len) == 0 && strlen(current_dir) == directory_entry->name_len) {
+							return directory_entry->inode;
 					}
+					block_read += directory_entry->rec_len;
 				}
 			}
-			current_dir = strtok(NULL, "/");
 		}
-		return 0;
+		current_dir = strtok(NULL, "/");
+	}
+	return 0;
 }
+
 
 
 int main(int argc, char **argv) {
@@ -109,24 +110,55 @@ int main(int argc, char **argv) {
     inodes_per_block = EXT2_BLOCK_SIZE / sizeof(struct ext2_inode);
     inode_num_blocks = sb->s_inodes_per_group / inodes_per_block;
 
-	// hard link
-	if (argc == 4) {
-		char src_path[strlen(argv[1]) + 1];
-	 	strcpy(src_path, argv[1]);
-		char des_path[strlen(argv[2]) + 1];
-		strcpy(src_path, argv[2]);
+    it = (struct ext2_inode *)(disk + gd->bg_inode_table * EXT2_BLOCK_SIZE);
 
-		int src_inode_num = get_inode_num(src_path);
-		strcpy(src_path, argv[1]); //correct the string
+    it[inode_num - 1].i_blocks[0]
+    struct ext2_dir_entry * new_block =  (struct ext2_dir_entry *) (disk + (it[inode_num - 1].i_blocks[0] * EXT2_BLOCK_SIZE));
 
-		int s
-	}
-	// soft links
-	else if (argc == 5) {get_inode_num()}
+	char src_path[strlen(argv[1]) + 1];
+ 	strcpy(src_path, argv[1]);
+	char des_path[strlen(argv[2]) + 1];
+	strcpy(src_path, argv[2]);
 
+	struct ext2_dir_entry *src_dir = get_dir_entry(src_path);
+	struct ext2_dir_entry *des_dir = get_dir_entry(des_path);
 
+    int des_inode = des_dir->inode;
+    int des_block = it[des_inode - 1].i_blocks[0];
 
+    struct ext2_dir_entry * new_dir_entry = (struct ext2_dir_entry *) (disk + (des_block * EXT2_BLOCK_SIZE));
 
-    return 0;
+    int block_read = 0;
+
+    it[des_inode - 1].i_links_count++; // update link count
+    while(block_read < EXT2_BLOCK_SIZE){
+        //printf("%d\n", curr_dir->rec_len);
+        if(block_read + new_dir_entry->rec_len >= EXT2_BLOCK_SIZE ){
+            if (new_dir_entry->name_len % 4 != 0) {
+                new_dir_entry->rec_len = new_dir_entry->name_len + 12 - (new_dir_entry->name_len % 4);
+            } else{
+                new_dir_entry->rec_len = new_dir_entry->name_len + 8;
+            }
+
+            // get to the new empty part
+            block_read += new_dir_entry->rec_len;
+            new_dir_entry = (void *)new_dir_entry + new_dir_entry->rec_len;
+            new_dir_entry->inode = src_dir->inode;
+            new_dir_entry->rec_len = EXT2_BLOCK_SIZE - block_read;
+            // hard link
+            if (argc == 4) {
+                new_dir_entry->name_len = strlen(src_dir->name);
+                strcpy(new_dir_entry->name, src_dir->name);
+            // soft link
+            } else if(argc == 5) {
+                new_dir_entry->name_len = strlen(argv[2]);
+                strcpy(new_dir_entry->name, argv[2]);
+            }
+            new_dir_entry->file_type = EXT2_FT_REG_FILE;
+        } else {
+            block_read += new_dir_entry->rec_len;
+            new_dir_entry = (void *)new_dir_entry + new_dir_entry->rec_len;
+        }
+    }
 
 }
