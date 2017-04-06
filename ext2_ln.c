@@ -113,9 +113,9 @@ int main(int argc, char **argv) {
     it = (struct ext2_inode *)(disk + gd->bg_inode_table * EXT2_BLOCK_SIZE);
 
 	char src_path[strlen(argv[1]) + 1];
- 	strcpy(src_path, argv[1]);
+ 	strcpy(src_path, argv[2]);
 	char des_path[strlen(argv[2]) + 1];
-	strcpy(src_path, argv[2]);
+	strcpy(src_path, argv[3]);
 
 	struct ext2_dir_entry *src_dir = get_dir_entry(src_path);
 	struct ext2_dir_entry *des_dir = get_dir_entry(des_path);
