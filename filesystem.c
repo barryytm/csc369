@@ -108,13 +108,17 @@ int check_block(unsigned char * disk, int curr_block, char * dir_name){
     struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + curr_block * EXT2_BLOCK_SIZE);
 
     while(rec_length < EXT2_BLOCK_SIZE){
-        if(strcmp(temp, directory_entry->name)){
+
+        if(strcmp(temp, directory_entry->name) == 0){
             return directory_entry->inode;
         }
+
         rec_length += directory_entry->rec_len;
+        directory_entry = (void *)directory_entry + directory_entry->rec_len;
     }
 
-    return -1;
+    
+    return 0;
 }
 
 

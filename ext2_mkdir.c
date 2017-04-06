@@ -170,8 +170,10 @@ int main(int argc, char **argv){
 		curr_block = it[curr_inode - 1].i_block[0];
 
 		int temp = curr_inode;
+		printf("%s\n", seperated_path[num_checked_dirs]);
 		curr_inode = check_block(disk, curr_block, seperated_path[num_checked_dirs]);
 
+		printf("Curr_inode: %d\n", curr_inode);
 		num_checked_dirs++;
 
 		if(num_checked_dirs == num_dirs){
@@ -180,7 +182,7 @@ int main(int argc, char **argv){
 				perror("Path already exists.\n");
 				exit(EEXIST);
 			}
-		}else if(curr_inode == -1){
+		}else if(curr_inode == 0){
 			perror("Path does not exist.\n");
 			exit(ENOENT);
 		}else{
@@ -192,19 +194,22 @@ int main(int argc, char **argv){
  	int free_inode = get_empty_inode(inode_bitmap, num_inodes);
  	int free_block = get_empty_data_block(block_bitmap, num_blocks);
 
- 	struct ext2_inode * ind = it + (sizeof(struct ext2_inode) * (free_inode - 1));
+ 	printf("Current Inode: %d\nParent Inode: %d\nFree Inode: %d\nFree Block: %d\n", curr_inode, parent_inode, free_inode, free_block);
+
+ 	struct ext2_inode * ind = &it[free_inode - 1];
  	struct ext2_dir_entry * new_block =  (struct ext2_dir_entry *) (disk + (free_block * EXT2_BLOCK_SIZE));
 
  	
- 	struct ext2_inode *parent_ind = it + (sizeof(struct ext2_inode) * (parent_inode - 1));
+ 	struct ext2_inode *parent_ind = &it[parent_inode - 1];
  	
  	//char *names[3] = {".", "..", seperated_path[num_checked_dirs - 1]};
+ 	printf("Block Number: %d\n", free_block);
  	new_block->rec_len = 12;
  	new_block->name_len = 1;
  	new_block->inode = free_inode;
  	strcpy(new_block->name, ".");
 
- 	new_block += new_block->rec_len;
+ 	new_block = (void *)new_block + new_block->rec_len;
 
  	new_block->rec_len = 1012;
  	new_block->name_len = 2;
@@ -212,26 +217,43 @@ int main(int argc, char **argv){
  	strcpy(new_block->name, "..");
 
  	block_bitmap[(free_block - 1) / 8] |= (1 << (free_block - 1) % 8);
+ 	gd->bg_free_blocks_count -= 1;
 
- 	ind->i_mode = (ind->i_mode & 0) | (EXT2_S_IFDIR);
+ 	printf("current inode mode: %d\n", ind->i_mode);
+ 	ind->i_mode = EXT2_S_IFDIR;
  	ind->i_block[0] = free_block;
     ind->i_size = EXT2_BLOCK_SIZE;
     ind->i_blocks = 1;
     ind->i_links_count = 2;
 
+    printf("current inode mode: %d\n", ind->i_mode);
+    printf("block: %d\n", ind->i_block[0]);
+    printf("size: %d\n", ind->i_size);
+    printf("num of blocks: %d\n", ind->i_blocks);
+    printf("link count: %d\n", ind->i_links_count);
+
     inode_bitmap[(free_inode - 1) / 8] |= (1 << (free_inode - 1) % 8);
+    
+    gd->bg_used_dirs_count += 1;
+    gd->bg_free_inodes_count -= 1;
 
     parent_ind->i_links_count += 1;
 
     struct ext2_dir_entry *curr_dir;
     int rec_length = 0;
+    /*
+    int i;
+    for(i = 0; i < 15; i++){
+    	printf("%d\n", parent_ind->i_block[i]);
+    }*/
 
-    
-    	
     	if(parent_ind->i_block[0]){
     		curr_dir = (struct ext2_dir_entry *) (disk + parent_ind->i_block[0] * EXT2_BLOCK_SIZE);
+    		//curr_dir = (void *)curr_dir + 12;
+    		//printf("%s\n", curr_dir->name);
 	    	while(rec_length < EXT2_BLOCK_SIZE){
-	    		if(rec_length + curr_dir->rec_len >= EXT2_BLOCK_SIZE && curr_dir->rec_len != curr_dir->name_len + 12 - (curr_dir->name_len % 4) && curr_dir->rec_len != curr_dir->name_len + 8){
+	    		//printf("%d\n", curr_dir->rec_len);
+	    		if(rec_length + curr_dir->rec_len >= EXT2_BLOCK_SIZE ){
 	    			if(curr_dir->name_len % 4 != 0){
 	    				curr_dir->rec_len = curr_dir->name_len + 12 - (curr_dir->name_len % 4);
 	    			}else{
@@ -239,7 +261,7 @@ int main(int argc, char **argv){
 	    			}
 
 	    			rec_length += curr_dir->rec_len;
-	    			curr_dir += curr_dir->rec_len;
+	    			curr_dir = (void *)curr_dir + curr_dir->rec_len;
 
 	    			curr_dir->inode = free_inode;
 	    			curr_dir->rec_len = EXT2_BLOCK_SIZE - rec_length;
@@ -247,15 +269,17 @@ int main(int argc, char **argv){
 	    			strcpy(curr_dir->name, seperated_path[num_dirs - 1]);
 	    			curr_dir->file_type = EXT2_FT_DIR;
 	    			rec_length += curr_dir->rec_len;
+	    			printf("returning\n");
 	    			return 0;
 	    		}
 	    		else{
 	    			rec_length += curr_dir->rec_len;
-	    			curr_dir += curr_dir->rec_len;
+	    			curr_dir = (void *)curr_dir + curr_dir->rec_len;
 	    		}
 	    	}
 	    }
     	
+    printf("Failed.\n");	
 
 	return -1;
 }
