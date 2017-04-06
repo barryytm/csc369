@@ -51,32 +51,39 @@ int main(int argc, char ** argv){
 		curr_block = it[curr_inode - 1].i_block[0];
 
 		int temp = curr_inode;
+		//printf("%s\n", seperated_path[num_checked_dirs]);
 		curr_inode = check_block(disk, curr_block, seperated_path[num_checked_dirs]);
 
+		//printf("Curr_inode: %d\n", curr_inode);
 		num_checked_dirs++;
 
 		if(num_checked_dirs == num_dirs){
+			parent_inode = temp;
 			not_done = 0;
-			if(curr_inode){
-				perror("Path already exists.\n");
-				exit(EEXIST);
-			}
-		}else if(curr_inode == -1){
+		}else if(curr_inode == 0){
 			perror("Path does not exist.\n");
 			exit(ENOENT);
 		}else{
+			if((it[curr_inode - 1].i_mode & EXT2_S_IFREG) != 0){
+				perror("Path does not exist.\n");
+				exit(ENOENT);
+			}
 			parent_inode = temp;
 		}
 	}
 
-	struct ext2_inode *parent_ind = &it[curr_inode - 1];
-	struct ext2_inode *target_ind = &it[parent_inode - 1];
+	printf("curr inode: %d\n", curr_inode);
+	printf("parent inode: %d\n", parent_inode);
+
+	struct ext2_inode *parent_ind = &it[parent_inode - 1];
+	struct ext2_inode *target_ind = &it[curr_inode - 1];
 
 
 	struct ext2_dir_entry  *curr_entry;
 	struct ext2_dir_entry *prev_entry;
 
-	if(target_ind->i_mode & EXT2_S_IFDIR){
+	printf("%d\n", target_ind->i_mode);
+	if((target_ind->i_mode & EXT2_S_IFDIR) != 0){
 		perror("rm can only have file and symbolic link targets.\n");
 		exit(EINVAL);
 	}
@@ -95,7 +102,7 @@ int main(int argc, char ** argv){
       	      
       	      strncpy(buf, curr_entry->name, curr_entry->name_len);
       	      buf[curr_entry->name_len] = '\0';
-
+      	      printf("%s %s\n", buf, seperated_path[num_dirs - 1]);
 	           if(strcmp(buf, seperated_path[num_dirs - 1]) == 0){
           		 prev_entry->rec_len += curr_entry->rec_len;
           		 // clean entry just to be safe

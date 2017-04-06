@@ -107,9 +107,14 @@ int check_block(unsigned char * disk, int curr_block, char * dir_name){
 
     struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + curr_block * EXT2_BLOCK_SIZE);
 
-    while(rec_length < EXT2_BLOCK_SIZE){
+    char buf[EXT2_NAME_LEN];
 
-        if(strcmp(temp, directory_entry->name) == 0){
+    while(rec_length < EXT2_BLOCK_SIZE){
+        strncpy(buf, directory_entry->name, directory_entry->name_len);
+        buf[directory_entry->name_len] = '\0';
+
+        //printf("%s %s %d\n", temp, buf, strcmp(temp, buf));
+        if(strcmp(temp, buf) == 0){
             return directory_entry->inode;
         }
 

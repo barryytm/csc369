@@ -170,13 +170,14 @@ int main(int argc, char **argv){
 		curr_block = it[curr_inode - 1].i_block[0];
 
 		int temp = curr_inode;
-		printf("%s\n", seperated_path[num_checked_dirs]);
+		//printf("%s\n", seperated_path[num_checked_dirs]);
 		curr_inode = check_block(disk, curr_block, seperated_path[num_checked_dirs]);
 
-		printf("Curr_inode: %d\n", curr_inode);
+		//printf("Curr_inode: %d\n", curr_inode);
 		num_checked_dirs++;
 
 		if(num_checked_dirs == num_dirs){
+			parent_inode = temp;
 			not_done = 0;
 			if(curr_inode){
 				perror("Path already exists.\n");
@@ -190,6 +191,8 @@ int main(int argc, char **argv){
 		}
 	}
 
+	printf("parent_inode: %d\n", parent_inode);
+	printf("current_inodeL %d\n", curr_inode);
 
  	int free_inode = get_empty_inode(inode_bitmap, num_inodes);
  	int free_block = get_empty_data_block(block_bitmap, num_blocks);
@@ -207,6 +210,7 @@ int main(int argc, char **argv){
  	new_block->rec_len = 12;
  	new_block->name_len = 1;
  	new_block->inode = free_inode;
+ 	new_block->file_type = EXT2_FT_DIR;
  	strcpy(new_block->name, ".");
 
  	new_block = (void *)new_block + new_block->rec_len;
@@ -214,6 +218,7 @@ int main(int argc, char **argv){
  	new_block->rec_len = 1012;
  	new_block->name_len = 2;
  	new_block->inode = parent_inode;
+ 	new_block->file_type = EXT2_FT_DIR;
  	strcpy(new_block->name, "..");
 
  	block_bitmap[(free_block - 1) / 8] |= (1 << (free_block - 1) % 8);
@@ -269,8 +274,8 @@ int main(int argc, char **argv){
 	    			strcpy(curr_dir->name, seperated_path[num_dirs - 1]);
 	    			curr_dir->file_type = EXT2_FT_DIR;
 	    			rec_length += curr_dir->rec_len;
-	    			printf("returning\n");
-	    			return 0;
+	    			//printf("returning\n");
+	    			return 1;
 	    		}
 	    		else{
 	    			rec_length += curr_dir->rec_len;
@@ -281,5 +286,5 @@ int main(int argc, char **argv){
     	
     printf("Failed.\n");	
 
-	return -1;
+	return 0;
 }
