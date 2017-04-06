@@ -13,7 +13,7 @@
 int main(int argc, char ** argv){
 	unsigned char *disk;
 	if(argc != 3) {
-        fprintf(stderr, "Usage: %s <image file name> <absolute path of directory>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <image file name> <absolute path to file>\n", argv[0]);
         exit(-1);
     }
 

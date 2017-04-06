@@ -11,130 +11,12 @@
 #include "filesystem.h"
 
 
-/*
-int string_size(char *c){
-    int i = 0;
-    
-    while(c[i] != '\0'){
-        i++;
-    }
-    
-    return i;
-}
-
-int *make_bitmap(unsigned char * bitmap, int bitmap_length){
-	int *map = malloc(sizeof(int) * bitmap_length);
-	int i,j;
-	for (i = 0; i < bitmap_length / 8; i++) {
-		for (j = 0; j < 8; j++) {
-			map[i*8 + j] = (bitmap[i] & 1 << j) >> j;
-		}
-	}
-
-	return map;
-}
-
-int num_directories_in_path(char * path){
-	int count = 0;
-	int i = 0;
-	
-	while(path[i] != '\0'){
-		if(path[i] == '/'){
-			count++;
-		}
-		i++;
-	}
-
-	return count + 1;
-}
-
-void split_path(char * path, char ** result){
-	int i = 0;
-
-	char * temp_path = malloc(sizeof(path));
-
-	strcpy(temp_path, path);
-
-	char * temp = strtok(temp_path, "/");
-
-	while(temp != NULL){
-		result[i] = malloc(sizeof(temp));
-		strcpy(result[i], temp);
-		temp = strtok(temp_path, "/");
-		i++;
-	}
-}
-
-char ** make_path(char *path, int *num_directories){
-	char ** result;
-	*num_directories = num_directories_in_path(path);
-
-	result = malloc((*num_directories) * sizeof(char *));
-
-	split_path(path, result);
-
-	return result;
-}
-
-int check_block(unsigned char * disk, int curr_block, char * dir_name){
-	int rec_length = 0;
-	int dir_name_len = string_size(dir_name);
-
-	char * temp = malloc(dir_name_len);
-
-	strncpy(temp, dir_name, dir_name_len);
-
-	struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + curr_block * EXT2_BLOCK_SIZE);
-
-	while(rec_length < EXT2_BLOCK_SIZE){
-		if(strcmp(temp, directory_entry->name)){
-			return directory_entry->inode;
-		}
-		rec_length += directory_entry->rec_len;
-	}
-
-	return -1;
-}
-
-int find_free_inode(unsigned char * inode_bitmap, int num_inodes){
-	int bit;
-	int i;
-
-	for(i = 0; i < num_inodes; i++){
-		if(i == 1 || i >= 11){
-			bit = (inode_bitmap[i/8] & 1 << (i % 8)) >> (i % 8);
-			if(bit == 0){
-				return i + 1;
-			}
-		}
-	}
-
-	perror("No free inode.\n");
-	exit(ENOENT);
-}
-
-int find_free_block(unsigned char * block_bitmap, int num_blocks){
-	int bit;
-	int i;
-	
-	for(i = 0; i < num_blocks; i++){
-		if(i == 1 || i >= 11){
-			bit = (block_bitmap[i/8] & 1 << (i % 8)) >> (i % 8);
-			if(bit == 0){
-				return i + 1;
-			}
-		}
-	}
-
-	perror("No free inode.\n");
-	exit(ENOENT);
-}
-*/
 
 int main(int argc, char **argv){
 	unsigned char *disk;
+	//check for correct number of arguments
 	if(argc != 3) {
-        fprintf(stderr, "Usage: %s <image file name> <absolute path of directory>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <image file name> <absolute path to directory>\n", argv[0]);
         exit(-1);
     }
 
@@ -146,7 +28,10 @@ int main(int argc, char **argv){
         exit(1);
     }
 
+    //the desired path
     char *path = argv[2];
+
+    //get pointers to important sections of the disk
     struct ext2_group_desc *gd = (struct ext2_group_desc *)(disk + 2 * EXT2_BLOCK_SIZE);
 
     struct ext2_inode * it = (struct ext2_inode *)(disk + gd->bg_inode_table * EXT2_BLOCK_SIZE);
@@ -154,6 +39,7 @@ int main(int argc, char **argv){
 	unsigned char *block_bitmap = disk + gd->bg_block_bitmap * EXT2_BLOCK_SIZE;
 	unsigned char *inode_bitmap = disk + gd->bg_inode_bitmap * EXT2_BLOCK_SIZE;
 
+	//get the seperated given path
     int num_dirs;
 	char ** seperated_path = make_path(path, &num_dirs);
 
@@ -166,11 +52,13 @@ int main(int argc, char **argv){
 	int num_inodes = sb->s_inodes_count;
 	int num_blocks = sb->s_blocks_count;
 
+	//go through file system to find inode of parent directory
 	while(not_done){
 		curr_block = it[curr_inode - 1].i_block[0];
 
 		int temp = curr_inode;
-		//printf("%s\n", seperated_path[num_checked_dirs]);
+		
+		//check the block to see if it contains the current path
 		curr_inode = check_block(disk, curr_block, seperated_path[num_checked_dirs]);
 
 		//printf("Curr_inode: %d\n", curr_inode);
