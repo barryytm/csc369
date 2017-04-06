@@ -117,6 +117,8 @@ int main(int argc, char **argv) {
 	char des_path[strlen(argv[2]) + 1];
 	strcpy(src_path, argv[3]);
 
+    printf("%s\n", src_path);
+    printf("%s\n", des_path);
 	struct ext2_dir_entry *src_dir = get_dir_entry(src_path);
 	struct ext2_dir_entry *des_dir = get_dir_entry(des_path);
 
@@ -156,6 +158,8 @@ int main(int argc, char **argv) {
             block_read += new_dir_entry->rec_len;
             new_dir_entry = (void *)new_dir_entry + new_dir_entry->rec_len;
         }
+
+        return 1;
     }
 
 }
