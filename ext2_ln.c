@@ -31,9 +31,9 @@ struct ext2_inode *it;
 
 int *get_dir_block_map() {
     unsigned int mask = 0b000000000111;
-    int dir_block_map[sb->s_inodes_count];
+    int *dir_block_map = malloc(sizeof(int) * sb->s_inodes_count);
     int num_dir = 0;
-    int current_inode = 1;
+    int i, j;
 
     for (i = 0; i < inode_num_blocks; i++){
         inode_block = (struct ext2_inode *)(disk + (gd->bg_inode_table + i) * EXT2_BLOCK_SIZE);
@@ -41,10 +41,10 @@ int *get_dir_block_map() {
             // found a directory block
             if(((inode_block[j].i_mode)  & EXT2_S_IFDIR) != 0 &&
                 inode_block[j].i_mode & mask && inode_block[j].i_size > 0){
-                    dir_block_bitmap[i - 1] = inode_block[j].i_block[0];
+                    dir_block_map[i - 1] = inode_block[j].i_block[0];
                     num_dir++;
             } else {
-                dir_block_bitmap[i - 1] = 0;
+                dir_block_map[i - 1] = 0;
             }
         }
     }
@@ -52,23 +52,23 @@ int *get_dir_block_map() {
 	return dir_block_map;
 }
 
-ext2_dir_entry *get_dir_entry(char *src_path) {
+struct ext2_dir_entry *get_dir_entry(char *src_path) {
 	int i;
 	// hardlink
 	int block_read = 0;
 		// directory block
-	int dir_block_map[sb->s_inodes_count] = get_dir_block_map();
+	int *dir_block_map = get_dir_block_map();
 	char *current_dir = strtok(src_path, "/");
 
 	while (current_dir != NULL) {
 		for(i = 0; i < sb->s_inodes_count; i++) {
 			if (dir_block_map[i] != 0) {
-				struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + dir_blocks[i] * EXT2_BLOCK_SIZE);
+				struct ext2_dir_entry * directory_entry = (struct ext2_dir_entry *) (disk + dir_block_map[i] * EXT2_BLOCK_SIZE);
 				while (block_read < EXT2_BLOCK_SIZE) {
 					directory_entry = (void *)directory_entry + directory_entry->rec_len;
 					// found the dir
 					if (strncmp(current_dir, directory_entry->name, directory_entry->name_len) == 0 && strlen(current_dir) == directory_entry->name_len) {
-							return directory_entry->inode;
+							return directory_entry;
 					}
 					block_read += directory_entry->rec_len;
 				}
@@ -76,7 +76,7 @@ ext2_dir_entry *get_dir_entry(char *src_path) {
 		}
 		current_dir = strtok(NULL, "/");
 	}
-	return 0;
+	return NULL;
 }
 
 
@@ -112,9 +112,6 @@ int main(int argc, char **argv) {
 
     it = (struct ext2_inode *)(disk + gd->bg_inode_table * EXT2_BLOCK_SIZE);
 
-    it[inode_num - 1].i_blocks[0]
-    struct ext2_dir_entry * new_block =  (struct ext2_dir_entry *) (disk + (it[inode_num - 1].i_blocks[0] * EXT2_BLOCK_SIZE));
-
 	char src_path[strlen(argv[1]) + 1];
  	strcpy(src_path, argv[1]);
 	char des_path[strlen(argv[2]) + 1];
@@ -124,7 +121,7 @@ int main(int argc, char **argv) {
 	struct ext2_dir_entry *des_dir = get_dir_entry(des_path);
 
     int des_inode = des_dir->inode;
-    int des_block = it[des_inode - 1].i_blocks[0];
+    int des_block = it[des_inode - 1].i_block[0];
 
     struct ext2_dir_entry * new_dir_entry = (struct ext2_dir_entry *) (disk + (des_block * EXT2_BLOCK_SIZE));
 
